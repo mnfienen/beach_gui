@@ -1,0 +1,190 @@
+#/ <summary>
+#/   Computes PLS parameters using SIMPLS algorithm.
+#/ </summary>
+#X0: double[,]
+#Y0: double[,]
+#factors: int
+import numpy as np
+import copy
+
+def Simpls(X0, Y0, factors):
+    # Reference: Sijmen de Jong
+    # "SIMPLS: an alternative approach to partial least squares regression"
+
+    #Make sure X0 and Y0 are matrices, not arrays:
+    X0 = np.matrix(X0)
+    Y0 = np.matrix(Y0)
+    
+    # Initialize and prepare the data
+    rows = sourceX.GetLength(0)
+    xcols = sourceX.GetLength(1)
+    ycols = sourceY.GetLength(1)
+
+    # Initialize storage variables
+    P = np.matrix( np.zeros( (xcols,factors) ))
+    Q = np.matrix( np.zeros( (ycols, factors) ))
+    T = np.matrix( np.zeros( (rows, factors) ))
+    U = np.matrix( np.zeros( (rows, factors) ))
+    R = np.matrix( np.zeros( (xcols, factors) ))
+
+    varX = []
+    varY = []
+
+    # Orthogonal basis
+    V =  np.matrix( np.zeros( (xcols, factors) ) )
+
+
+    # Create covariance matrix X0'Y0
+    covariance = X0.T*Y0
+    '''for i in range(xcols):
+        for j in range(ycols):
+            for k in range(rows):
+                covariance[i, j] += X0[k, i] * Y0[k, j]'''
+
+
+    #region SIMPLS
+    for iteration in range(factors):
+    
+        # Perform SVD on the covariance matrix
+        U, S, V_h = np.linalg.svd(covariance)
+        r = U[:,0]
+        c = V_h.H[:,0]
+        s = S[0]
+
+        t = X0 * r
+        '''t = new double[rows]
+        for i in range(rows):
+            for j in range(xcols):
+                t[i] += X0[i, j] * r[j]'''
+                
+        # Normalize t
+        norm_t = np.linalg.norm(t)
+        t = t/norm_t
+        '''double norm_t = Matrix.Norm(t)
+        for i in range(t):
+            t[i] /= norm_t'''
+
+        # p = X0'*t
+        p = X0.T * t
+        '''double[] p = new double[xcols]
+        for i in range(xcols):
+            for j in range(rows):
+                p[i] += X0[j, i] * t[j]'''
+
+        # q = s*c/norm(t)
+        q = s*c/norm_t
+        '''double[] q = new double[ycols]
+        for j in range(ycols):
+            q[j] = s * c[j] / norm_t'''
+
+        # u = Y0*q
+        u = Y0 * q
+        '''double[] u = new double[rows]
+        for i in range(rows):
+            for j in range(ycols):
+                u[i] += Y0[i, j] * q[j]'''
+
+        # Normalize r using norm(t)
+        r = r/norm_t
+        '''for i in range(r):
+            r[i] /= norm_t'''
+
+
+        # Update the orthonormal basis V
+        v = copy.copy(p)
+        for i in range(2):
+            # Modified Gram-Schmidt to deal with numerical instabilities
+            #  http://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process
+
+            sum = v.T * V[:,i]
+                    
+            for j in range(iteration):
+                v = v - (sum * V[:,j])
+            
+        
+
+        # Normalize v
+        norm_v = np.linalg.norm(v)
+        v = v/norm_v
+        '''for i in range(v):
+            v[i] /= norm_v'''
+
+
+        # Save iteration
+        R[:,iteration] = r
+        U[:,iteration] = u
+        Q[:,iteration] = q
+        T[:,iteration] = t
+        P[:,iteration] = p
+        V[:,iteration] = v
+
+        # Explained variance
+        varX.append( p.T*p )
+        varY.append( q.T*q )
+
+
+        # Covariance matrix deflaction
+        # Cov = Cov - vi*(vi'*Cov)
+        d=list()
+        for k in range(ycols):
+            d.append(v * covariance[:,k] * v)
+        d = np.matrix(d).T
+
+        covariance = covariance-d
+        '''for i in range(xcols):
+            for j in range(ycols): covariance[i, j] -= d[i, j]'''
+
+        # Vi = V(:,1:i)
+        # Cov = Cov - Vi*(Vi'*Cov)
+        
+        d = list()
+        for i in range(iteration):
+            d.append(V[:,i] * covariance.T)
+        d = np.matrix(d)
+
+        
+        for i in range(iteration):
+            for j in range(xcols):
+                for k in range(ycols):
+                    covariance[j,k] -= V[j,i] * d[i,k]
+
+    #endregion
+
+
+    # Orthogonalize scores (by convention)
+    for i in range(factors):
+        for s in range(2):
+            for j in range(i):
+                double b = 0
+                for k in range(rows):  b += U[k, i] * T[k, j]
+                for k in range(rows):  U[k, i] -= b * T[k, j]
+
+
+
+    # Set class variables
+    self.scoresX = T      # factor score matrix T
+    self.scoresY = U      # factor score matrix U
+    self.loadingsX = P    # loading matrix P, the loadings for X such that X = TP + F
+    self.loadingsY = Q    # loading matrix Q, the loadings for Y such that Y = TQ + E
+    self.weights = R      # the columns of R are weight vectors
+    self.coeffbase = R
+
+
+    # Calculate variance explained proportions
+    self.componentProportionX = new double[factors]
+    self.componentProportionY = new double[factors]
+
+    double sumX = 0.0, sumY = 0.0
+    for i in range(rows):
+        # Sum of squares for matrix X
+        for j in range(xcols):
+            sumX += X0[i, j] * X0[i, j]
+
+        # Sum of squares for matrix Y
+        for j in range(ycols):
+            sumY += Y0[i, j] * Y0[i, j]
+
+    # Calculate variance proportions
+    for i in range(factors):
+        componentProportionY[i] = varY[i] / sumY
+        componentProportionX[i] = varX[i] / sumX
