@@ -465,6 +465,9 @@ class Model_Wrapper:
         try: method=args['threshold_method']
         except KeyError: method=1
         
+        try: self.specificity=args['specificity']
+        except KeyError: pass
+        
         if method == 0: self.Threshold_on_Proportions()
         elif method == 1: self.Threshold_on_Counts()
             

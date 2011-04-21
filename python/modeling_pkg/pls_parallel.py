@@ -33,7 +33,7 @@ def Tune_Split(model, specificity, balance_method=1, threshold_method=1, wedge='
     
     #List the ways that we'll try splitting the data
     params=[]
-    for breakpoint in np.unique( model.model_frame[wedge] )[10:12]:
+    for breakpoint in np.unique( model.model_frame[wedge] )[10:-10]:
         params.append( (copy.copy(model), balance_method, threshold_method, specificity, wedge, breakpoint) )
 
     #Compute the imbalance for each breakpoint in parallel, asynchronously:

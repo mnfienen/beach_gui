@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0,'../../python')
 
 #Import the PLS modeling classes
-from modeling_pkg import pls, logistic, gbm #, pls_parallel
+from modeling_pkg import pls, logistic, gbm, pls_parallel
 import utils
 
 import numpy as np
@@ -92,15 +92,16 @@ def PLS_Models(model_dict, validation_dict, target, **args):
             for threshold_method in threshold:
             
                 if break_flag != 0:
-                    mw.Generate_Models(breaks=1, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
-                    split_index = mlab.find(mw.imbalance[:,1] == np.min(mw.imbalance[:,1]))
-
-                    '''imbalance = pls_parallel.Tune_Split(mw, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
-                    split_index = mlab.find(imbalance[:,1] == np.min(imbalance[:,1]))'''
+                    '''mw.Generate_Models(breaks=1, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
+                    imbalance = mw.imbalance
+                    split_index = mlab.find(mw.imbalance[:,1] == np.min(mw.imbalance[:,1]))'''
                     
-                    for split in mw.imbalance[split_index,0]:
+                    imbalance = pls_parallel.Tune_Split(mw, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
+                    split_index = mlab.find(imbalance[:,1] == np.min(imbalance[:,1]))
+                    
+                    for split in imbalance[split_index,0]:
                         mw.Split(wedge='julian', breakpoint=split)
-                        mw.Assign_Thresholds(threshold_method=threshold_method)
+                        mw.Assign_Thresholds(threshold_method=threshold_method, specificity=spec_lim)
                         
                         summary = Summarize(mw, validation_dict, **args)
                         summary.insert( 1, balance_method)
