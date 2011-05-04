@@ -10,6 +10,7 @@ from modelbuilder import Ui_ModelBuilder
 import model_script
 import numpy as np
 import pickle
+import utils
 
 
 
@@ -28,18 +29,30 @@ class MyForm(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_ModelBuilder()
         self.ui.setupUi(self)
-    
-        #self.validate = True
+        self.Enable_Validation()
 
         QtCore.QObject.connect(self.ui.pushButton_Execute, QtCore.SIGNAL("clicked()"), self.Execute )
         QtCore.QObject.connect(self.ui.pushButton_pickle, QtCore.SIGNAL("clicked()"), self.Wild)
         QtCore.QObject.connect(self.ui.pushButton_find, QtCore.SIGNAL("clicked()"), self.Find)
+        
+        QtCore.QObject.connect(self.ui.radioButton_validation_year, QtCore.SIGNAL("clicked()"), self.Enable_Validation)
+        QtCore.QObject.connect(self.ui.radioButton_validation_CV, QtCore.SIGNAL("clicked()"), self.Enable_Validation)
 
 
     def Find(self):
         data_path = QtGui.QFileDialog.getOpenFileName(self, caption="Open Data File", directory='../../data', filter='*.csv')
         self.ui.lineEdit_path.setText( data_path )
         
+    def Enable_Validation(self):
+        if self.ui.radioButton_validation_year.isChecked() is True:
+            self.ui.lineEdit_year.setEnabled( True )
+            self.ui.lineEdit_CV_folds.setEnabled( False )
+            
+        elif self.ui.radioButton_validation_CV.isChecked() is True:
+            self.ui.lineEdit_year.setEnabled( False )
+            self.ui.lineEdit_CV_folds.setEnabled( True )
+
+
         
     def Wild(self):
         selected = self.ui.tableView.selectedIndexes()[0].row()
@@ -61,7 +74,7 @@ class MyForm(QtGui.QMainWindow):
 
  
     def Execute(self):
-        method='pls'
+    
         if self.ui.radioButton_PLS.isChecked(): method='pls'
         if self.ui.radioButton_Logistic.isChecked(): method='logistic'
         if self.ui.radioButton_Boost.isChecked(): method='boosting'
@@ -77,13 +90,23 @@ class MyForm(QtGui.QMainWindow):
         
         infile = str( self.ui.lineEdit_path.text() )
         self.target = model_target = str( self.ui.lineEdit_target.text() ).lower()
-
-        year = int( self.ui.lineEdit_year.text() )
-
+        
         specificities = str( self.ui.lineEdit_specificities.text() )
         specificity = [float(limit) for limit in specificities.split(',')]
+        
+        #If we're training on some years to predict another
+        if self.ui.radioButton_validation_year.isChecked():
+            validation='year'
+            year = int( self.ui.lineEdit_year.text() )
+            [headers, result, self.data_dict] = model_script.Test(infile, model_target, method, year=year, specificity=specificity, balance=balance, threshold=threshold)
+        
+        #If we're cross-validating on random folds of data
+        elif self.ui.radioButton_validation_CV.isChecked():
+            validation='CV'
+            folds = int( self.ui.lineEdit_CV_folds.text() )
+            [headers, result, self.data_dict] = model_script.Test_CV(infile, model_target, method, folds=folds, specificity=specificity, balance=balance, threshold=threshold)
+        
 
-        [headers, result, self.data_dict] = model_script.Test(infile, model_target, method, year=year, specificity=specificity, balance=balance, threshold=threshold)
         self.result=result
 
         '''if len(result.squeeze().shape)==1: result=list( data )
@@ -132,7 +155,13 @@ class MyForm(QtGui.QMainWindow):
         #tv.setSortingEnabled(True)
     
         return tv
- 
+        
+        
+        
+        
+        
+        
+        
 
 class MyTableModel(QtCore.QAbstractTableModel): 
     def __init__(self, datain, headerdata, parent=None, *args): 

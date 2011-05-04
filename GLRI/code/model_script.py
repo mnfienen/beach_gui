@@ -7,6 +7,7 @@ import utils
 
 import numpy as np
 import matplotlib.mlab as mlab
+import copy
 
 column_names = ['year', 'threshold', 'balance', 'specificity', 'split date', 'true pos', 'true neg', 'false pos', 'false neg', 'total']
 boosting_iterations = 20000
@@ -225,7 +226,8 @@ def Summarize(model, validation_dict, **args):
 
     spec_lim = float( model.specificity )
     
-    if 'year' in args: year = float( args['year'] )
+    if 'fold' in args: year = float( args['fold'] )
+    elif 'year' in args: year = float( args['year'] )
     else: year = float( validation_dict['year'][0] )
     
     tp = float( sum(raw[:,0]) )  #True positives
@@ -259,3 +261,79 @@ def Produce(params, method, data_dict, target):
         model = gbm.Model(data_dict, target, weights=params['balance'], cost=[1,params['specificity']], iterations=boosting_iterations)
 
     return model
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+def Test_CV(infile, target, method, outfile='', folds=10, NA_flag=99999999, **args):
+    '''This is the main function in the script. It uses the PLS modeling classes to build a predictive model.'''
+    
+    [headers, data] = utils.Read_CSV(infile, NA_flag)
+    
+    '''if folds==0:
+        validate = False
+        years = np.unique( data[:,headers('year')] )
+    else: years = np.array( utils.flatten([year]) )'''
+    
+    summary = []
+    
+    '''Create the model (training) and validation dictionaries'''
+    fold = utils.CV_Partition(data, folds)
+    data_dict = dict( zip(headers, np.transpose(data)) )
+    folds = np.arange(folds)+1
+    
+    result_dict = dict()
+    
+    for f in folds:
+        model_data = data[fold!=f,:]
+        validation_data = data[fold==f,:]
+
+        model_dict = dict( zip(headers, np.transpose(model_data)) )
+        validation_dict = dict( zip(headers, np.transpose(validation_data)) )
+
+        if method.lower()=='pls':
+            '''Find the best model for the specified fold with the specified parameters'''
+            s = PLS_Models(model_dict, validation_dict, target, fold=f, **args)
+            for ss in s: summary.append( ss )
+
+        elif method.lower()=='logistic':
+            '''Find the best model for the specified fold with the specified parameters'''
+            s = Logistic_Model(model_dict, validation_dict, target, fold=f, **args)
+            for ss in s: summary.append( ss )
+
+        elif method.lower()=='boosting':
+            '''Find the best model for the specified fold with the specified parameters'''
+            s = GBM_Model(model_dict, validation_dict, target, fold=f, **args)
+            for ss in s: summary.append( ss )
+
+        result_dict[f] = s
+      
+    combined = result_dict[max(folds)]
+    for f in folds[:-1][::-1]:
+        new_combined = list()
+        for combo_row in combined:
+            for row in result_dict[f]:
+                if ( (row[1]==combo_row[1] and row[2]==combo_row[2]) or (np.isnan(row[1]) and  np.isnan(combo_row[1]) and np.isnan(row[2]) and np.isnan(combo_row[2])) ) and row[3]==combo_row[3]:
+                    new_row = copy.copy(combo_row)
+                    new_row[5] += row[5]
+                    new_row[6] += row[6]
+                    new_row[7] += row[7]
+                    new_row[8] += row[8]
+                    new_row[9] += row[9]
+                    new_row[4] = str(row[4]) + ', ' + str( int(new_row[4]) )
+                    new_row[0] = str(row[0]) + ', ' + str( int(new_row[0]) )
+                    new_combined.append( new_row )
+                    
+        combined = new_combined
+    
+    #result = np.array(combined)
+    columns = ['fold', 'threshold', 'balance', 'specificity', 'split date', 'true pos', 'true neg', 'false pos', 'false neg', 'total']    
+
+    return [columns, combined, data_dict]
