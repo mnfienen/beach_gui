@@ -10,7 +10,7 @@ import matplotlib.mlab as mlab
 import copy
 
 column_names = ['year', 'threshold', 'balance', 'specificity', 'split date', 'true pos', 'true neg', 'false pos', 'false neg', 'total']
-boosting_iterations = 20000
+boosting_iterations = 2000
 
 def Test(infile, target, method, outfile='', year=0, NA_flag=99999999, **args):
     '''This is the main function in the script. It uses the PLS modeling classes to build a predictive model.'''
@@ -27,23 +27,29 @@ def Test(infile, target, method, outfile='', year=0, NA_flag=99999999, **args):
     for year in years:
         '''Create the model (training) and validation dictionaries'''
         [model_data, validation_data] = utils.Partition_Data(data, headers, year)
+
         model_dict = dict( zip(headers, np.transpose(model_data)) )
+        [model_dict, factor_levels] = utils.Factorize(model_dict, target='year', return_levels=True)
+
         validation_dict = dict( zip(headers, np.transpose(validation_data)) )
+        validation_dict = utils.Factorize(validation_dict, target='year', levels=factor_levels)
+
         data_dict = dict( zip(headers, np.transpose(data)) )
+        data_dict = utils.Factorize(data_dict, target='year')
 
         if method.lower()=='pls':
             '''Find the best model for the specified year with the specified parameters'''
-            s = PLS_Models(model_dict, validation_dict, target, **args)
+            s = PLS_Models(model_dict, validation_dict, target, year=year, **args)
             for ss in s: summary.append( ss )
 
         elif method.lower()=='logistic':
             '''Find the best model for the specified year with the specified parameters'''
-            s = Logistic_Model(model_dict, validation_dict, target, **args)
+            s = Logistic_Model(model_dict, validation_dict, target, year=year, **args)
             for ss in s: summary.append( ss )
 
         elif method.lower()=='boosting':
             '''Find the best model for the specified year with the specified parameters'''
-            s = GBM_Model(model_dict, validation_dict, target, **args)
+            s = GBM_Model(model_dict, validation_dict, target, year=year, **args)
             for ss in s: summary.append( ss )
 
         
@@ -93,12 +99,12 @@ def PLS_Models(model_dict, validation_dict, target, **args):
             for threshold_method in threshold:
             
                 if break_flag != 0:
-                    '''mw.Generate_Models(breaks=1, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
+                    mw.Generate_Models(breaks=1, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
                     imbalance = mw.imbalance
-                    split_index = mlab.find(mw.imbalance[:,1] == np.min(mw.imbalance[:,1]))'''
+                    split_index = mlab.find(mw.imbalance[:,1] == np.min(mw.imbalance[:,1]))
                     
-                    imbalance = pls_parallel.Tune_Split(mw, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
-                    split_index = mlab.find(imbalance[:,1] == np.min(imbalance[:,1]))
+                    '''imbalance = pls_parallel.Tune_Split(mw, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
+                    split_index = mlab.find(imbalance[:,1] == np.min(imbalance[:,1]))'''
                     
                     for split in imbalance[split_index,0]:
                         mw.Split(wedge='julian', breakpoint=split)
@@ -228,7 +234,7 @@ def Summarize(model, validation_dict, **args):
     
     if 'fold' in args: year = float( args['fold'] )
     elif 'year' in args: year = float( args['year'] )
-    else: year = float( validation_dict['year'][0] )
+    else: year = 'na'
     
     tp = float( sum(raw[:,0]) )  #True positives
     tn = float( sum(raw[:,1]) )  #True negatives
@@ -276,6 +282,7 @@ def Test_CV(infile, target, method, outfile='', folds=10, NA_flag=99999999, **ar
     '''This is the main function in the script. It uses the PLS modeling classes to build a predictive model.'''
     
     [headers, data] = utils.Read_CSV(infile, NA_flag)
+    [headers, data] = utils.Factorize(data, target='year', headers=headers)
     
     '''if folds==0:
         validate = False
@@ -320,15 +327,15 @@ def Test_CV(infile, target, method, outfile='', folds=10, NA_flag=99999999, **ar
         new_combined = list()
         for combo_row in combined:
             for row in result_dict[f]:
-                if ( (row[1]==combo_row[1] and row[2]==combo_row[2]) or (np.isnan(row[1]) and  np.isnan(combo_row[1]) and np.isnan(row[2]) and np.isnan(combo_row[2])) ) and row[3]==combo_row[3]:
+                if ( (row[1]==combo_row[1] or (np.isnan(row[1]) and np.isnan(combo_row[1]))) and (row[2]==combo_row[2] or (np.isnan(row[2]) and np.isnan(combo_row[2]))) and (row[3]==combo_row[3] or (np.isnan(row[3]) and np.isnan(combo_row[3]))) ):
                     new_row = copy.copy(combo_row)
                     new_row[5] += row[5]
                     new_row[6] += row[6]
                     new_row[7] += row[7]
                     new_row[8] += row[8]
                     new_row[9] += row[9]
-                    new_row[4] = str(row[4]) + ', ' + str( int(new_row[4]) )
-                    new_row[0] = str(row[0]) + ', ' + str( int(new_row[0]) )
+                    if not np.isnan(row[4]): new_row[4] = str(row[4]) + ', ' + str( int(new_row[4]) )
+                    new_row[0] = 'na'
                     new_combined.append( new_row )
                     
         combined = new_combined

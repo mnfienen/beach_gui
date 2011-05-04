@@ -168,6 +168,59 @@ def Import_File(file_name):
 
 
 
+def Factorize(data, target='year', headers='', levels='', return_levels=False):
+    '''Turn target into a factor whose coefficients will sum-to-zero'''
+
+    #if the data is not originally a dictionary, turn it into one.
+    if type(data) is dict:
+        passed_dict = True
+    else:
+        data = dict( zip(headers, data.transpose()) )
+        passed_dict = False
+
+    original = data.pop(target)
+
+    #Decide what levels the factor can take
+    if not levels:
+        levels = list( np.unique(original) )
+
+    #If levels are passed  to the function, then code the factor into those levels
+    else:
+        levels = list( np.unique(levels) )
+
+    #Produce the ways to code this factor (number of columns is one fewer than the number of levels; last level is coded -1,...,-1)
+    labels = np.diag( np.ones(len(levels)-1) )
+    labels = np.vstack( (labels, -1*np.ones(len(levels)-1)) )
+    missing = np.zeros(len(levels)-1)
+
+    factorized = list()
+
+    #Code each observation appropriately.
+    for obs in original:
+        if obs in levels: factorized.append( labels[levels.index(obs),:] )
+        else: factorized.append( missing )
+
+    factorized = np.array(factorized)    
+
+    #Add the new columns to the data dictionary.
+    for level in levels[:-1]:
+        data[ str(int(level)) ] = factorized[:,levels.index(level)]
+
+    #If the data was passed as an array, return an array
+    if not passed_dict:
+        data_array = np.array(data.values()).transpose()
+        headers = data.keys()
+
+        if not return_levels: return [headers, data_array]
+        else: return [headers, data_array, levels]
+
+    #Otherwise, return a dictionary.
+    else:
+        if not return_levels: return data
+        else: return [data, levels]
+
+    
+
 
 
 def Read_CSV(file, NA_flag='NA'):
