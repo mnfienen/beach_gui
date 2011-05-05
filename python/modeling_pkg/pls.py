@@ -677,32 +677,39 @@ class Model_Wrapper:
 
             #Now create a data dictionary with the data for this division.
             rows = filter( lambda x: x in upper_rows, lower_rows )
-            submodel_data = validation_array[rows,:]
-            submodel_frame = dict(zip(validation_headers, np.transpose(submodel_data)))
-            #if hasattr(args, 'AR_part'): args['AR_part'] = AR_part[rows]
 
-            #Make predictions on the split models  
-            predictions = self.models[i].Predict(submodel_frame)[:, self.models[i].ncomp-1 ]
-            if 'AR_part' in args:
-                predictions += args['AR_part'][rows]
-            
-            actual = submodel_frame[self.target]
-            self.actual = actual
-            self.i = i
-            self.predictions.extend(predictions)
-            residuals = actual - predictions
-            self.prediction_residuals.extend(residuals)
-            
-            for k in range(len(predictions)):
-                self.k = k
-                t_pos = int(predictions[k] >= self.models[i].threshold and actual[k] >= 2.3711)
-                t_neg = int(predictions[k] <  self.models[i].threshold and actual[k] < 2.3711)
-                f_pos = int(predictions[k] >= self.models[i].threshold and actual[k] < 2.3711)
-                f_neg = int(predictions[k] <  self.models[i].threshold and actual[k] >= 2.3711)
-                raw.append([t_pos, t_neg, f_pos, f_neg])
+            #If this CV fold has nothing on one side of the split, then return a row of zeros
+            if len(rows>0):
+                submodel_data = validation_array[rows,:]
+                submodel_frame = dict(zip(validation_headers, np.transpose(submodel_data)))
+                #if hasattr(args, 'AR_part'): args['AR_part'] = AR_part[rows]
     
-            i+=1
-        raw = np.array(raw)
+                #Make predictions on the split models  
+                predictions = self.models[i].Predict(submodel_frame)[:, self.models[i].ncomp-1 ]
+                if 'AR_part' in args:
+                    predictions += args['AR_part'][rows]
+                
+                actual = submodel_frame[self.target]
+                self.actual = actual
+                self.i = i
+                self.predictions.extend(predictions)
+                residuals = actual - predictions
+                self.prediction_residuals.extend(residuals)
+                
+                for k in range(len(predictions)):
+                    self.k = k
+                    t_pos = int(predictions[k] >= self.models[i].threshold and actual[k] >= 2.3711)
+                    t_neg = int(predictions[k] <  self.models[i].threshold and actual[k] < 2.3711)
+                    f_pos = int(predictions[k] >= self.models[i].threshold and actual[k] < 2.3711)
+                    f_neg = int(predictions[k] <  self.models[i].threshold and actual[k] >= 2.3711)
+                    raw.append([t_pos, t_neg, f_pos, f_neg])
+        
+                i+=1
+                raw = np.array(raw)
+
+            else:
+                raw = np.array([[0,0,0,0]])
+
         return raw
         
         
