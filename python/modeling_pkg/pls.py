@@ -141,8 +141,9 @@ class Model:
         prediction_params = {'object': self.model, 'newdata': data_frame }
         prediction = r.predict(**prediction_params)
 
-        #Translate the R output to a type that can be navigated in Python
+        #Translate the R output to a type that can be navigated in Python - ensure that we end up with a 2-dimensional array
         prediction = np.array(prediction).squeeze()
+        prediction = np.array(prediction, ndmin=2)
         return prediction
         
         
@@ -703,13 +704,12 @@ class Model_Wrapper:
                     f_pos = int(predictions[k] >= self.models[i].threshold and actual[k] < 2.3711)
                     f_neg = int(predictions[k] <  self.models[i].threshold and actual[k] >= 2.3711)
                     raw.append([t_pos, t_neg, f_pos, f_neg])
-        
-                i+=1
-                raw = np.array(raw)
-
             else:
-                raw = np.array([[0,0,0,0]])
+                raw.append([0,0,0,0])
 
+            i+=1
+
+        raw = np.array(raw)
         return raw
         
         
