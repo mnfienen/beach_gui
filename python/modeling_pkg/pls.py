@@ -705,7 +705,7 @@ class Model_Wrapper:
                     f_neg = int(predictions[k] <  self.models[i].threshold and actual[k] >= 2.3711)
                     raw.append([t_pos, t_neg, f_pos, f_neg])
             else:
-                raw.append([0,0,0,0])
+                pass
 
             i+=1
 
