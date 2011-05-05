@@ -679,7 +679,7 @@ class Model_Wrapper:
             rows = filter( lambda x: x in upper_rows, lower_rows )
 
             #If this CV fold has nothing on one side of the split, then return a row of zeros
-            if len(rows>0):
+            if len(rows)>0:
                 submodel_data = validation_array[rows,:]
                 submodel_frame = dict(zip(validation_headers, np.transpose(submodel_data)))
                 #if hasattr(args, 'AR_part'): args['AR_part'] = AR_part[rows]
