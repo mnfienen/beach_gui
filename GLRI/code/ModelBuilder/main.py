@@ -80,14 +80,15 @@ class MyForm(QtGui.QMainWindow):
         if self.ui.radioButton_Boost.isChecked(): method='boosting'
 
         threshold=[]
-        if self.ui.checkBox_tProps.isChecked(): threshold.append(0)
-        if self.ui.checkBox_tCounts.isChecked(): threshold.append(1)
-
         balance=[]
-        if self.ui.checkBox_bFalseNeg.isChecked(): balance.append(0)
-        if self.ui.checkBox_bFalseNegRate.isChecked(): balance.append(1)
-        if self.ui.checkBox_bNDR.isChecked(): balance.append(2)
         
+        if self.ui.checkBox_Proportions.isChecked():
+            threshold.append(0)
+            balance.append(1)
+        if self.ui.checkBox_Counts.isChecked():
+            threshold.append(1)
+            balance.append(0)
+
         infile = str( self.ui.lineEdit_path.text() )
         self.target = model_target = str( self.ui.lineEdit_target.text() ).lower()
         

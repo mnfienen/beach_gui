@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>879</width>
+    <width>888</width>
     <height>503</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>730</x>
      <y>470</y>
-     <width>141</width>
+     <width>151</width>
      <height>32</height>
     </rect>
    </property>
@@ -59,7 +59,7 @@
    <property name="geometry">
     <rect>
      <x>730</x>
-     <y>430</y>
+     <y>420</y>
      <width>61</width>
      <height>22</height>
     </rect>
@@ -78,7 +78,7 @@
    <property name="geometry">
     <rect>
      <x>730</x>
-     <y>410</y>
+     <y>400</y>
      <width>101</width>
      <height>16</height>
     </rect>
@@ -93,8 +93,8 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>800</x>
-     <y>430</y>
+     <x>810</x>
+     <y>420</y>
      <width>71</width>
      <height>32</height>
     </rect>
@@ -129,8 +129,8 @@
    <property name="geometry">
     <rect>
      <x>720</x>
-     <y>20</y>
-     <width>151</width>
+     <y>40</y>
+     <width>161</width>
      <height>71</height>
     </rect>
    </property>
@@ -181,7 +181,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>100</x>
+      <x>110</x>
       <y>20</y>
       <width>41</width>
       <height>20</height>
@@ -203,9 +203,9 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>100</x>
+      <x>120</x>
       <y>40</y>
-      <width>41</width>
+      <width>31</width>
       <height>20</height>
      </rect>
     </property>
@@ -224,9 +224,9 @@
    <property name="geometry">
     <rect>
      <x>720</x>
-     <y>320</y>
-     <width>151</width>
-     <height>81</height>
+     <y>290</y>
+     <width>161</width>
+     <height>91</height>
     </rect>
    </property>
    <property name="title">
@@ -256,7 +256,7 @@
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>141</width>
+      <width>151</width>
       <height>20</height>
      </rect>
     </property>
@@ -294,15 +294,15 @@
    <property name="geometry">
     <rect>
      <x>720</x>
-     <y>230</y>
-     <width>151</width>
-     <height>81</height>
+     <y>200</y>
+     <width>161</width>
+     <height>71</height>
     </rect>
    </property>
    <property name="title">
-    <string>Balance by</string>
+    <string>Threshold, balance method:</string>
    </property>
-   <widget class="QCheckBox" name="checkBox_bFalseNeg">
+   <widget class="QCheckBox" name="checkBox_Counts">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -312,10 +312,10 @@
      </rect>
     </property>
     <property name="text">
-     <string>False negatives</string>
+     <string>Counts</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox_bFalseNegRate">
+   <widget class="QCheckBox" name="checkBox_Proportions">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -325,62 +325,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>False negative rate</string>
-    </property>
-    <property name="checked">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox_bNDR">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>151</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Non-discovery rate</string>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="groupBox_4">
-   <property name="geometry">
-    <rect>
-     <x>720</x>
-     <y>160</y>
-     <width>151</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Threshold by:</string>
-   </property>
-   <widget class="QCheckBox" name="checkBox_tProps">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>20</y>
-      <width>101</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
      <string>Proportions</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox_tCounts">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>40</y>
-      <width>87</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Counts</string>
     </property>
     <property name="checked">
      <bool>true</bool>
@@ -391,8 +336,8 @@
    <property name="geometry">
     <rect>
      <x>720</x>
-     <y>100</y>
-     <width>151</width>
+     <y>130</y>
+     <width>161</width>
      <height>51</height>
     </rect>
    </property>
@@ -402,7 +347,7 @@
    <widget class="QLineEdit" name="lineEdit_specificities">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>20</x>
       <y>20</y>
       <width>131</width>
       <height>22</height>
