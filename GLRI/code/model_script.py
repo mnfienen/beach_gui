@@ -85,9 +85,6 @@ def PLS_Models(model_dict, validation_dict, target, **args):
     try: threshold=utils.flatten([args['threshold']])
     except KeyError: threshold=[0,1]                          #Default: threshold by counts
 
-    try: balance=utils.flatten([args['balance']])
-    except KeyError: balance=[0,1,2]                            #Default: balance the proportion of false negatives between the subseasons.
-
     if break_flag != 1: model=pls.Model( model_dict, model_target=target.lower() )
     if break_flag != 0: mw=pls.Model_Wrapper( data=model_dict, model_target=target.lower() )
 
@@ -95,26 +92,27 @@ def PLS_Models(model_dict, validation_dict, target, **args):
 
     #Test models w/ midseason split
     for spec_lim in limits:
-        for balance_method in balance:
-            for threshold_method in threshold:
+        for threshold_method in threshold:
+            if threshold_method==0: balance_method=1 #
+            else: balance_method=0
             
-                if break_flag != 0:
-                    mw.Generate_Models(breaks=1, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
-                    imbalance = mw.imbalance
-                    split_index = mlab.find(mw.imbalance[:,1] == np.min(mw.imbalance[:,1]))
+            if break_flag != 0:
+                '''mw.Generate_Models(breaks=1, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
+                imbalance = mw.imbalance
+                split_index = mlab.find(mw.imbalance[:,1] == np.min(mw.imbalance[:,1]))'''
+                
+                imbalance = pls_parallel.Tune_Split(mw, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
+                split_index = mlab.find(imbalance[:,1] == np.min(imbalance[:,1]))
+                
+                for split in imbalance[split_index,0]:
+                    mw.Split(wedge='julian', breakpoint=split)
+                    mw.Assign_Thresholds(threshold_method=threshold_method, specificity=spec_lim)
                     
-                    '''imbalance = pls_parallel.Tune_Split(mw, specificity=spec_lim, wedge='julian', threshold_method=threshold_method, balance_method=balance_method)
-                    split_index = mlab.find(imbalance[:,1] == np.min(imbalance[:,1]))'''
+                    summary = Summarize(mw, validation_dict, **args)
+                    summary.insert( 1, balance_method)
+                    summary.insert( 1, threshold_method)
                     
-                    for split in imbalance[split_index,0]:
-                        mw.Split(wedge='julian', breakpoint=split)
-                        mw.Assign_Thresholds(threshold_method=threshold_method, specificity=spec_lim)
-                        
-                        summary = Summarize(mw, validation_dict, **args)
-                        summary.insert( 1, balance_method)
-                        summary.insert( 1, threshold_method)
-                        
-                        results.append( summary )
+                    results.append( summary )
               
     #Test models w/o midseason split
     if break_flag != 1:
@@ -334,7 +332,7 @@ def Test_CV(infile, target, method, outfile='', folds=10, NA_flag=99999999, **ar
                     new_row[7] += row[7]
                     new_row[8] += row[8]
                     new_row[9] += row[9]
-                    if not np.isnan(row[4]): new_row[4] = str(row[4]) + ', ' + str( int(new_row[4]) )
+                    if not np.isnan(row[4]): new_row[4] = str(row[4]) + ', ' + str( new_row[4] )
                     new_row[0] = 'na'
                     new_combined.append( new_row )
                     
