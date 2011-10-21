@@ -19,7 +19,7 @@ def Test(infile, target, method, outfile='', year=0, NA_flag=99999999, **args):
     
     if year==0:
         validate = False
-        years = np.unique( data[:,headers('year')] )
+        years = np.unique( data[:,headers.index('year')] )
     else: years = np.array( utils.flatten([year]) )
     
     summary = []
