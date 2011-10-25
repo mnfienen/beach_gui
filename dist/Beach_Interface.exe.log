@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "boot_com_servers.py", line 44, in <module>
+  File "Beach_Interface.pyo", line 10, in <module>
+  File "python\modeling_pkg\pls.pyo", line 15, in <module>
+  File "matplotlib\pyplot.pyo", line 95, in <module>
+  File "matplotlib\backends\__init__.pyo", line 25, in pylab_setup
+ImportError: No module named backend_tkagg
